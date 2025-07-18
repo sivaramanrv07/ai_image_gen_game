@@ -11,21 +11,27 @@ const ratioSelect = document.getElementById("ratio-select");
 const API_KEY = "vk-mFOBg3cgo90fNuXdnXZB19nwOk5nDSDjCyUau2IRe4IOiQ";
 
 const examplePrompts = [
-  "A magic forest with glowing plants and fairy homes among giant mushrooms",
-  "An old steampunk airship floating through golden clouds at sunset",
-  "A future Mars colony with glass domes and gardens against red mountains",
-  "A dragon sleeping on gold coins in a crystal cave",
-  "An underwater kingdom with merpeople and glowing coral buildings",
-  "A floating island with waterfalls pouring into clouds below",
-  "A witch's cottage in fall with magic herbs in the garden",
-  "A robot painting in a sunny studio with art supplies around it",
-  "A magical library with floating glowing books and spiral staircases",
-  "A Japanese shrine during cherry blossom season with lanterns and misty mountains",
-  "A cosmic beach with glowing sand and an aurora in the night sky",
-  "A medieval marketplace with colorful tents and street performers",
-  "A cyberpunk city with neon signs and flying cars at night",
-  "A peaceful bamboo forest with a hidden ancient temple",
-  "A giant turtle carrying a village on its back in the ocean",
+  "Show a superhero in a wheelchair flying through a futuristic city.",
+
+"Create an image of a blind musician performing in a glowing concert hall with sound waves around them.",
+
+"Generate a fantasy warrior with a prosthetic arm made of enchanted metal.",
+
+"Visualize a peaceful park with accessible paths, sensory gardens, and inclusive playgrounds.",
+"Design a magical school where ramps float and books read themselves aloud.",
+
+"Imagine a space station with zero-gravity mobility aids and voice-controlled doors.",
+
+"Create a cozy home with adaptive furniture and glowing sign-language walls.",
+
+"Show a beach with wheelchair-friendly boardwalks and tactile sand that changes color when touched.",
+"Make an image of a person painting with their feet in a sunny studio.",
+
+"Show a dancer with a prosthetic leg performing on a glowing stage.",
+
+"Visualize a person using a communication device to talk with magical creatures.",
+
+"Create a portrait of someone with a hearing aid surrounded by musical notes and light.",
 ];
 
 (() => {
@@ -121,7 +127,17 @@ const addSwapListeners = (container, rows, cols) => {
   });
 };
 
-// ✅ Show success message
+// ✅ Confetti (needs canvas-confetti library in HTML)
+const launchConfetti = () => {
+  confetti({
+    particleCount: 150,
+    spread: 100,
+    origin: { y: 0.6 },
+    scalar: 1.2
+  });
+};
+
+// ✅ Animated success message
 const showSuccessMessage = (message) => {
   let msgBox = document.getElementById("puzzle-success");
   if (!msgBox) {
@@ -131,13 +147,15 @@ const showSuccessMessage = (message) => {
     msgBox.style.top = "20px";
     msgBox.style.left = "50%";
     msgBox.style.transform = "translateX(-50%)";
-    msgBox.style.padding = "10px 20px";
+    msgBox.style.padding = "12px 24px";
     msgBox.style.backgroundColor = "#4caf50";
     msgBox.style.color = "#fff";
-    msgBox.style.borderRadius = "6px";
+    msgBox.style.borderRadius = "10px";
     msgBox.style.fontWeight = "bold";
     msgBox.style.zIndex = 9999;
-    msgBox.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+    msgBox.style.boxShadow = "0 4px 15px rgba(0,0,0,0.3)";
+    msgBox.style.fontSize = "18px";
+    msgBox.style.animation = "popIn 0.5s ease-out";
     document.body.appendChild(msgBox);
   }
 
@@ -148,44 +166,36 @@ const showSuccessMessage = (message) => {
   setTimeout(() => {
     msgBox.style.opacity = "0";
     setTimeout(() => (msgBox.style.display = "none"), 600);
-  }, 3000); // Show for 3 seconds
+  }, 3000);
 };
 
-// ✅ Check puzzle win state
+// ✅ Puzzle completion animation
 const checkPuzzleSolved = (container) => {
   const children = Array.from(container.children);
   const isSolved = children.every((piece, i) => parseInt(piece.dataset.correctIndex) === i);
 
   if (isSolved) {
     showSuccessMessage("🎉 Puzzle Solved!");
+    launchConfetti();
+
+    // Animate all pieces for fun
+    container.querySelectorAll(".puzzle-piece").forEach(piece => {
+      piece.style.transition = "transform 0.6s ease, opacity 0.6s ease";
+      piece.style.transform = "scale(1.1) rotate(5deg)";
+    });
 
     setTimeout(() => {
-      container.style.transition = "opacity 0.5s";
+      container.style.transition = "transform 1s ease, opacity 1s ease";
+      container.style.transform = "scale(0.9)";
       container.style.opacity = "0";
 
       setTimeout(() => {
         container.remove();
-
-        // Optional: Keep puzzle and show overlay instead of removing
-        /*
-        const overlay = document.createElement("div");
-        overlay.textContent = "🎉 Solved!";
-        overlay.style.position = "absolute";
-        overlay.style.top = "50%";
-        overlay.style.left = "50%";
-        overlay.style.transform = "translate(-50%, -50%)";
-        overlay.style.fontSize = "2rem";
-        overlay.style.color = "#fff";
-        overlay.style.background = "rgba(0,0,0,0.6)";
-        overlay.style.padding = "10px 20px";
-        overlay.style.borderRadius = "10px";
-        overlay.style.zIndex = "10";
-        container.appendChild(overlay);
-        */
       }, 1000);
-    }, 3200);
+    }, 3000);
   }
 };
+
 
 const updateImageCard = (index, imageUrl) => {
   const imgCard = document.getElementById(`img-card-${index}`);

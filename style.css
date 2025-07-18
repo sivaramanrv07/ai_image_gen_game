@@ -10,8 +10,8 @@
   --color-primary: #5C56E1;
   --color-primary-dark: #5b21b6;
   --color-accent: #8B5CF6;
-  --color-card: #FFFFFF;
-  --color-input: #F1F1FF;
+  --color-card: #ccc2c2;
+  --color-input: #b2b2bb;
   --color-text: #09090E;
   --color-placeholder: #5C5A87;
   --color-border: #D4D4ED;
@@ -58,6 +58,7 @@ body {
 body.dark-theme .container {
   border: 1px solid var(--color-border);
 }
+
 .header {
   display: flex;
   align-items: center;
@@ -66,12 +67,12 @@ body.dark-theme .container {
 }
 .header .logo-wrapper {
   display: flex;
-  gap: 18px;
+  gap: 10px;
   align-items: center;
 }
 .header .logo-wrapper .logo {
-  height: 55px;
-  width: 56px;
+  height: 45px;
+  width: 45px;
   display: flex;
   color: #fff;
   flex-shrink: 0;
@@ -371,5 +372,11 @@ body.dark-theme .container {
   display: flex;
   justify-content: center;
 }
+body:not(.dark-theme) {
+  background: url('https://img.freepik.com/premium-photo/old-master-portrait-background-oil-painting-texture-photography-backdrop_537415-2379.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--color-text);
+}
+
 
 
