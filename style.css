@@ -10,7 +10,7 @@
   --color-primary: #5C56E1;
   --color-primary-dark: #5b21b6;
   --color-accent: #8B5CF6;
-  --color-card: #ccc2c2;
+  --color-card: #eeeeee;
   --color-input: #b2b2bb;
   --color-text: #09090E;
   --color-placeholder: #5C5A87;
@@ -245,12 +245,17 @@ body.dark-theme .container {
   font-weight: 500;
   border: none;
   color: #fff;
-  margin-left: auto;
   align-items: center;
   justify-content: center;
   padding: 12px 25px;
   background-image: var(--color-gradient);
+  grid-column: span 4; /* makes it take full row if 4-column layout */
+  justify-self: center;
+  margin-top: 10px; /* 
+  centers it within the row */
+  width: 200px;
 }
+
 .prompt-actions .generate-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 10px #6d28d94d;
@@ -398,10 +403,56 @@ body.dark-theme .container {
   justify-content: center;
 }
 body:not(.dark-theme) {
-  background: url('https://img.freepik.com/premium-photo/old-master-portrait-background-oil-painting-texture-photography-backdrop_537415-2379.jpg') no-repeat center center fixed;
-  background-size: cover;
+  background: linear-gradient(90deg, #ffb3ba, #ffdfba, #ffffba, #baffc9, #bae1ff, #d4baff);
+  background-attachment: fixed;
   color: var(--color-text);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.demo-btn {
+  background-color: #00b894;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.3s ease;
+}
+
+.demo-btn:hover {
+  background-color: #019875;
+}
+
+/* Error Message Styling */
+.error-message {
+  color: #e74c3c;
+  font-size: 18px;
+  margin-top: 4px;
+  display: none;
+  font-weight: 500;
+  text-align: left;
+  padding-left: 4px;
+}
+
+/* Ensure prompt textarea and selects don't overlap errors */
+.prompt-container,
+.select-wrapper {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+/* Optional: Add red border on invalid inputs (you can toggle class in JS if desired) */
+.invalid {
+  border-color: #e74c3c !important;
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+}
 
 

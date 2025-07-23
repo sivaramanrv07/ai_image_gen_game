@@ -7,7 +7,7 @@ const galleryGrid = document.querySelector(".gallery-grid");
 const modelSelect = document.getElementById("model-select");
 const countSelect = document.getElementById("count-select");
 const ratioSelect = document.getElementById("ratio-select");
-
+const gridSizeSelect = document.getElementById("grid-size-select");
 const API_KEY = "vk-mFOBg3cgo90fNuXdnXZB19nwOk5nDSDjCyUau2IRe4IOiQ";
 
 const examplePrompts = [
@@ -87,6 +87,8 @@ const createPuzzle = (container, imageUrl, rows = 3, cols = 3) => {
         piece.dataset.correctIndex = r * cols + c;
         piece.draggable = true;
         pieces.push(piece);
+        piece.style.border = "1px solid #ccc"; // Light gray border
+
       }
     }
 
@@ -211,13 +213,20 @@ const updateImageCard = (index, imageUrl) => {
     </div>
   `;
 
-  const puzzleContainer = document.getElementById("puzzle-container");
-  const puzzleBox = document.createElement("div");
-  puzzleBox.style.width = "300px";
-  puzzleBox.style.aspectRatio = "1 / 1";
-  puzzleBox.style.margin = "10px";
-  puzzleContainer.appendChild(puzzleBox);
-  createPuzzle(puzzleBox, imageUrl, 3, 3);
+const puzzleContainer = document.getElementById("puzzle-container");
+const puzzleBox = document.createElement("div");
+puzzleBox.style.width = "300px";
+puzzleBox.style.aspectRatio = "1 / 1";
+puzzleBox.style.margin = "10px";
+puzzleContainer.appendChild(puzzleBox);
+
+// ✅ Get the grid size from user selection
+const gridSize = parseInt(gridSizeSelect.value) || 3;
+
+// ✅ Use the selected grid size
+createPuzzle(puzzleBox, imageUrl, gridSize, gridSize);
+
+
 };
 
 const generateImages = async (selectedModel, imageCount, aspectRatio, promptText) => {
@@ -353,3 +362,106 @@ recognition.onresult = (event) => {
 recognition.onerror = (event) => {
   console.error("Speech recognition error:", event.error);
 };
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("image-form");
+  const promptInput = document.getElementById("prompt-input");
+  const modelSelect = document.getElementById("model-select");
+  const countSelect = document.getElementById("count-select");
+  const ratioSelect = document.getElementById("ratio-select");
+  const gridSelect = document.getElementById("grid-size-select");
+  const galleryGrid = document.querySelector(".gallery-grid");
+
+  // Show error
+  const showError = (id, message) => {
+    const el = document.getElementById(id);
+    el.textContent = message;
+    el.style.display = "block";
+  };
+
+  // Clear all errors
+  const clearErrors = () => {
+    document.querySelectorAll(".error-message").forEach(el => {
+      el.textContent = "";
+      el.style.display = "none";
+    });
+  };
+
+  // Clear specific error when user types/selects
+  const attachLiveValidation = (element, errorId) => {
+    element.addEventListener("input", () => {
+      const err = document.getElementById(errorId);
+      err.textContent = "";
+      err.style.display = "none";
+    });
+  };
+
+  attachLiveValidation(promptInput, "error-prompt");
+  attachLiveValidation(modelSelect, "error-model");
+  attachLiveValidation(countSelect, "error-count");
+  attachLiveValidation(ratioSelect, "error-ratio");
+  attachLiveValidation(gridSelect, "error-grid");
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    clearErrors();
+
+    let hasError = false;
+
+    if (!promptInput.value.trim()) {
+      showError("error-prompt", "Prompt is required.");
+      hasError = true;
+    }
+
+    if (!modelSelect.value) {
+      showError("error-model", "Select a model.");
+      hasError = true;
+    }
+
+    if (!countSelect.value) {
+      showError("error-count", "Select image count.");
+      hasError = true;
+    }
+
+    if (!ratioSelect.value) {
+      showError("error-ratio", "Select aspect ratio.");
+      hasError = true;
+    }
+
+    if (!gridSelect.value) {
+      showError("error-grid", "Select puzzle grid.");
+      hasError = true;
+    }
+
+    if (!hasError) {
+      createImageCards(
+        modelSelect.value,
+        parseInt(countSelect.value),
+        ratioSelect.value,
+        promptInput.value.trim()
+      );
+    }
+  });
+
+  // Actual createImageCards logic
+  const createImageCards = (selectedModel, imageCount, aspectRatio, promptText) => {
+    galleryGrid.innerHTML = "";
+    document.getElementById("puzzle-container").innerHTML = "";
+
+    for (let i = 0; i < imageCount; i++) {
+      galleryGrid.innerHTML += `
+        <div class="img-card loading" id="img-card-${i}" style="aspect-ratio: ${aspectRatio}">
+          <div class="status-container">
+            <div class="spinner"></div>
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <p class="status-text">Generating...</p>
+          </div>
+        </div>`;
+    }
+
+    document.querySelectorAll(".img-card").forEach((card, i) => {
+      setTimeout(() => card.classList.add("animate-in"), 100 * i);
+    });
+
+    generateImages(selectedModel, imageCount, aspectRatio, promptText);
+  };
+});
