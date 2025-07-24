@@ -1,3 +1,4 @@
+// DOM Elements
 const promptForm = document.querySelector(".prompt-form");
 const themeToggle = document.querySelector(".theme-toggle");
 const promptBtn = document.querySelector(".prompt-btn");
@@ -8,39 +9,36 @@ const modelSelect = document.getElementById("model-select");
 const countSelect = document.getElementById("count-select");
 const ratioSelect = document.getElementById("ratio-select");
 const gridSizeSelect = document.getElementById("grid-size-select");
+const voiceBtn = document.getElementById("voice-btn");
+
+// Configuration
 const API_KEY = "vk-mFOBg3cgo90fNuXdnXZB19nwOk5nDSDjCyUau2IRe4IOiQ";
+const API_URL = "https://api.vyro.ai/v2/image/generations";
 
 const examplePrompts = [
   "Show a superhero in a wheelchair flying through a futuristic city.",
-
-"Create an image of a blind musician performing in a glowing concert hall with sound waves around them.",
-
-"Generate a fantasy warrior with a prosthetic arm made of enchanted metal.",
-
-"Visualize a peaceful park with accessible paths, sensory gardens, and inclusive playgrounds.",
-"Design a magical school where ramps float and books read themselves aloud.",
-
-"Imagine a space station with zero-gravity mobility aids and voice-controlled doors.",
-
-"Create a cozy home with adaptive furniture and glowing sign-language walls.",
-
-"Show a beach with wheelchair-friendly boardwalks and tactile sand that changes color when touched.",
-"Make an image of a person painting with their feet in a sunny studio.",
-
-"Show a dancer with a prosthetic leg performing on a glowing stage.",
-
-"Visualize a person using a communication device to talk with magical creatures.",
-
-"Create a portrait of someone with a hearing aid surrounded by musical notes and light.",
+  "Create an image of a blind musician performing in a glowing concert hall with sound waves around them.",
+  "Generate a fantasy warrior with a prosthetic arm made of enchanted metal.",
+  "Visualize a peaceful park with accessible paths, sensory gardens, and inclusive playgrounds.",
+  "Design a magical school where ramps float and books read themselves aloud.",
+  "Imagine a space station with zero-gravity mobility aids and voice-controlled doors.",
+  "Create a cozy home with adaptive furniture and glowing sign-language walls.",
+  "Show a beach with wheelchair-friendly boardwalks and tactile sand that changes color when touched.",
+  "Make an image of a person painting with their feet in a sunny studio.",
+  "Show a dancer with a prosthetic leg performing on a glowing stage.",
+  "Visualize a person using a communication device to talk with magical creatures.",
+  "Create a portrait of someone with a hearing aid surrounded by musical notes and light."
 ];
 
-(() => {
+// Theme Management
+const initializeTheme = () => {
   const savedTheme = localStorage.getItem("theme");
   const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   const isDarkTheme = savedTheme === "dark" || (!savedTheme && systemPrefersDark);
+  
   document.body.classList.toggle("dark-theme", isDarkTheme);
   themeToggle.querySelector("i").className = isDarkTheme ? "fa-solid fa-sun" : "fa-solid fa-moon";
-})();
+};
 
 const toggleTheme = () => {
   const isDarkTheme = document.body.classList.toggle("dark-theme");
@@ -48,54 +46,153 @@ const toggleTheme = () => {
   themeToggle.querySelector("i").className = isDarkTheme ? "fa-solid fa-sun" : "fa-solid fa-moon";
 };
 
+// Utility Functions
 const getImageDimensions = (aspectRatio, baseSize = 512) => {
   const [width, height] = aspectRatio.split("/").map(Number);
   const scaleFactor = baseSize / Math.sqrt(width * height);
   let calculatedWidth = Math.round(width * scaleFactor);
   let calculatedHeight = Math.round(height * scaleFactor);
+  
+  // Ensure dimensions are multiples of 16
   calculatedWidth = Math.floor(calculatedWidth / 16) * 16;
   calculatedHeight = Math.floor(calculatedHeight / 16) * 16;
+  
   return { width: calculatedWidth, height: calculatedHeight };
 };
 
-const createPuzzle = (container, imageUrl, rows = 3, cols = 3) => {
-  container.innerHTML = "";
-  container.classList.add("puzzle-container");
-  container.style.position = "relative";
-  container.style.display = "grid";
-  container.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
-  container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-  container.style.gap = "2px";
-  container.style.aspectRatio = "1/1";
-  container.style.overflow = "hidden";
+// Validation Functions
+const showError = (id, message) => {
+  const element = document.getElementById(id);
+  if (element) {
+    element.textContent = message;
+    element.style.display = "block";
+  }
+};
 
-  const pieces = [];
+const clearErrors = () => {
+  document.querySelectorAll(".error-message").forEach(element => {
+    element.textContent = "";
+    element.style.display = "none";
+  });
+};
 
-  const img = new Image();
-  img.src = imageUrl;
-  img.onload = () => {
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const piece = document.createElement("div");
-        piece.classList.add("puzzle-piece");
-        piece.style.backgroundImage = `url(${imageUrl})`;
-        piece.style.backgroundSize = `${cols * 100}% ${rows * 100}%`;
-        piece.style.backgroundPosition = `${(c * 100) / (cols - 1)}% ${(r * 100) / (rows - 1)}%`;
-        piece.style.width = "100%";
-        piece.style.height = "100%";
-        piece.style.cursor = "grab";
-        piece.dataset.correctIndex = r * cols + c;
-        piece.draggable = true;
-        pieces.push(piece);
-        piece.style.border = "1px solid #ccc"; // Light gray border
-
+const attachLiveValidation = (element, errorId) => {
+  if (element) {
+    element.addEventListener("input", () => {
+      const errorElement = document.getElementById(errorId);
+      if (errorElement) {
+        errorElement.textContent = "";
+        errorElement.style.display = "none";
       }
-    }
+    });
+  }
+};
 
-    const shuffled = [...pieces].sort(() => Math.random() - 0.5);
-    shuffled.forEach(piece => container.appendChild(piece));
-    addSwapListeners(container, rows, cols);
-  };
+const validateForm = () => {
+  clearErrors();
+  let hasError = false;
+
+  if (!promptInput.value.trim()) {
+    showError("error-prompt", "Prompt is required.");
+    hasError = true;
+  }
+
+  if (!modelSelect.value) {
+    showError("error-model", "Select a model.");
+    hasError = true;
+  }
+
+  if (!countSelect.value) {
+    showError("error-count", "Select image count.");
+    hasError = true;
+  }
+
+  if (!ratioSelect.value) {
+    showError("error-ratio", "Select aspect ratio.");
+    hasError = true;
+  }
+
+  if (!gridSizeSelect.value) {
+    showError("error-grid", "Select puzzle grid.");
+    hasError = true;
+  }
+
+  return !hasError;
+};
+
+// Puzzle Functions
+const launchConfetti = () => {
+  if (typeof confetti !== 'undefined') {
+    confetti({
+      particleCount: 150,
+      spread: 100,
+      origin: { y: 0.6 },
+      scalar: 1.2
+    });
+  }
+};
+
+const showSuccessMessage = (message) => {
+  let msgBox = document.getElementById("puzzle-success");
+  
+  if (!msgBox) {
+    msgBox = document.createElement("div");
+    msgBox.id = "puzzle-success";
+    Object.assign(msgBox.style, {
+      position: "fixed",
+      top: "20px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      padding: "12px 24px",
+      backgroundColor: "#4caf50",
+      color: "#fff",
+      borderRadius: "10px",
+      fontWeight: "bold",
+      zIndex: "9999",
+      boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
+      fontSize: "18px",
+      animation: "popIn 0.5s ease-out"
+    });
+    document.body.appendChild(msgBox);
+  }
+
+  msgBox.textContent = message;
+  msgBox.style.opacity = "1";
+  msgBox.style.display = "block";
+
+  setTimeout(() => {
+    msgBox.style.opacity = "0";
+    setTimeout(() => msgBox.style.display = "none", 600);
+  }, 3000);
+};
+
+const checkPuzzleSolved = (container) => {
+  const children = Array.from(container.children);
+  const isSolved = children.every((piece, i) => parseInt(piece.dataset.correctIndex) === i);
+
+  if (isSolved) {
+    showSuccessMessage("🎉 Puzzle Solved!");
+    launchConfetti();
+
+    // Animate completion
+    container.querySelectorAll(".puzzle-piece").forEach(piece => {
+      piece.style.transition = "transform 0.6s ease, opacity 0.6s ease";
+      piece.style.transform = "scale(1.1) rotate(5deg)";
+    });
+
+    setTimeout(() => {
+      container.style.transition = "transform 1s ease, opacity 1s ease";
+      container.style.transform = "scale(0.9)";
+      container.style.opacity = "0";
+      setTimeout(() => {
+        container.remove();
+        // Auto refresh page after 1 minute (60 seconds)
+        setTimeout(() => {
+          window.location.reload();
+        }, 60000); // 60,000 milliseconds = 1 minute
+      }, 1000);
+    }, 3000);
+  }
 };
 
 const addSwapListeners = (container, rows, cols) => {
@@ -129,76 +226,55 @@ const addSwapListeners = (container, rows, cols) => {
   });
 };
 
-// ✅ Confetti (needs canvas-confetti library in HTML)
-const launchConfetti = () => {
-  confetti({
-    particleCount: 150,
-    spread: 100,
-    origin: { y: 0.6 },
-    scalar: 1.2
+const createPuzzle = (container, imageUrl, rows = 3, cols = 3) => {
+  container.innerHTML = "";
+  container.classList.add("puzzle-container");
+  
+  Object.assign(container.style, {
+    position: "relative",
+    display: "grid",
+    gridTemplateRows: `repeat(${rows}, 1fr)`,
+    gridTemplateColumns: `repeat(${cols}, 1fr)`,
+    gap: "2px",
+    aspectRatio: "1/1",
+    overflow: "hidden"
   });
+
+  const pieces = [];
+  const img = new Image();
+  
+  img.onload = () => {
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const piece = document.createElement("div");
+        piece.classList.add("puzzle-piece");
+        
+        Object.assign(piece.style, {
+          backgroundImage: `url(${imageUrl})`,
+          backgroundSize: `${cols * 100}% ${rows * 100}%`,
+          backgroundPosition: `${(c * 100) / (cols - 1)}% ${(r * 100) / (rows - 1)}%`,
+          width: "100%",
+          height: "100%",
+          cursor: "grab",
+          border: "1px solid #ccc"
+        });
+        
+        piece.dataset.correctIndex = r * cols + c;
+        piece.draggable = true;
+        pieces.push(piece);
+      }
+    }
+
+    // Shuffle and add pieces
+    const shuffled = [...pieces].sort(() => Math.random() - 0.5);
+    shuffled.forEach(piece => container.appendChild(piece));
+    addSwapListeners(container, rows, cols);
+  };
+  
+  img.src = imageUrl;
 };
 
-// ✅ Animated success message
-const showSuccessMessage = (message) => {
-  let msgBox = document.getElementById("puzzle-success");
-  if (!msgBox) {
-    msgBox = document.createElement("div");
-    msgBox.id = "puzzle-success";
-    msgBox.style.position = "fixed";
-    msgBox.style.top = "20px";
-    msgBox.style.left = "50%";
-    msgBox.style.transform = "translateX(-50%)";
-    msgBox.style.padding = "12px 24px";
-    msgBox.style.backgroundColor = "#4caf50";
-    msgBox.style.color = "#fff";
-    msgBox.style.borderRadius = "10px";
-    msgBox.style.fontWeight = "bold";
-    msgBox.style.zIndex = 9999;
-    msgBox.style.boxShadow = "0 4px 15px rgba(0,0,0,0.3)";
-    msgBox.style.fontSize = "18px";
-    msgBox.style.animation = "popIn 0.5s ease-out";
-    document.body.appendChild(msgBox);
-  }
-
-  msgBox.textContent = message;
-  msgBox.style.opacity = "1";
-  msgBox.style.display = "block";
-
-  setTimeout(() => {
-    msgBox.style.opacity = "0";
-    setTimeout(() => (msgBox.style.display = "none"), 600);
-  }, 3000);
-};
-
-// ✅ Puzzle completion animation
-const checkPuzzleSolved = (container) => {
-  const children = Array.from(container.children);
-  const isSolved = children.every((piece, i) => parseInt(piece.dataset.correctIndex) === i);
-
-  if (isSolved) {
-    showSuccessMessage("🎉 Puzzle Solved!");
-    launchConfetti();
-
-    // Animate all pieces for fun
-    container.querySelectorAll(".puzzle-piece").forEach(piece => {
-      piece.style.transition = "transform 0.6s ease, opacity 0.6s ease";
-      piece.style.transform = "scale(1.1) rotate(5deg)";
-    });
-
-    setTimeout(() => {
-      container.style.transition = "transform 1s ease, opacity 1s ease";
-      container.style.transform = "scale(0.9)";
-      container.style.opacity = "0";
-
-      setTimeout(() => {
-        container.remove();
-      }, 1000);
-    }, 3000);
-  }
-};
-
-
+// Image Generation Functions
 const updateImageCard = (index, imageUrl) => {
   const imgCard = document.getElementById(`img-card-${index}`);
   if (!imgCard) return;
@@ -213,24 +289,23 @@ const updateImageCard = (index, imageUrl) => {
     </div>
   `;
 
-const puzzleContainer = document.getElementById("puzzle-container");
-const puzzleBox = document.createElement("div");
-puzzleBox.style.width = "300px";
-puzzleBox.style.aspectRatio = "1 / 1";
-puzzleBox.style.margin = "10px";
-puzzleContainer.appendChild(puzzleBox);
-
-// ✅ Get the grid size from user selection
-const gridSize = parseInt(gridSizeSelect.value) || 3;
-
-// ✅ Use the selected grid size
-createPuzzle(puzzleBox, imageUrl, gridSize, gridSize);
-
-
+  // Create puzzle
+  const puzzleContainer = document.getElementById("puzzle-container");
+  if (puzzleContainer) {
+    const puzzleBox = document.createElement("div");
+    Object.assign(puzzleBox.style, {
+      width: "300px",
+      aspectRatio: "1 / 1",
+      margin: "10px"
+    });
+    
+    puzzleContainer.appendChild(puzzleBox);
+    const gridSize = parseInt(gridSizeSelect.value) || 3;
+    createPuzzle(puzzleBox, imageUrl, gridSize, gridSize);
+  }
 };
 
 const generateImages = async (selectedModel, imageCount, aspectRatio, promptText) => {
-  const API_URL = "https://api.vyro.ai/v2/image/generations";
   const { width, height } = getImageDimensions(aspectRatio);
   generateBtn.setAttribute("disabled", "true");
 
@@ -240,19 +315,13 @@ const generateImages = async (selectedModel, imageCount, aspectRatio, promptText
       formData.append("prompt", promptText);
       formData.append("style", "realistic");
       formData.append("aspect_ratio", aspectRatio);
-
-      // ✅ Use random seed to generate unique images
-      const seed = Math.floor(Math.random() * 1000000);
-      formData.append("seed", seed.toString());
-
+      formData.append("seed", Math.floor(Math.random() * 1000000).toString());
       formData.append("width", width);
       formData.append("height", height);
 
       const response = await fetch(API_URL, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${API_KEY}`,
-        },
+        headers: { Authorization: `Bearer ${API_KEY}` },
         body: formData,
       });
 
@@ -274,8 +343,11 @@ const generateImages = async (selectedModel, imageCount, aspectRatio, promptText
     } catch (error) {
       console.error(error);
       const imgCard = document.getElementById(`img-card-${i}`);
-      imgCard.classList.replace("loading", "error");
-      imgCard.querySelector(".status-text").textContent = "Generation failed!";
+      if (imgCard) {
+        imgCard.classList.replace("loading", "error");
+        const statusText = imgCard.querySelector(".status-text");
+        if (statusText) statusText.textContent = "Generation failed!";
+      }
     }
   });
 
@@ -285,7 +357,8 @@ const generateImages = async (selectedModel, imageCount, aspectRatio, promptText
 
 const createImageCards = (selectedModel, imageCount, aspectRatio, promptText) => {
   galleryGrid.innerHTML = "";
-  document.getElementById("puzzle-container").innerHTML = "";
+  const puzzleContainer = document.getElementById("puzzle-container");
+  if (puzzleContainer) puzzleContainer.innerHTML = "";
 
   for (let i = 0; i < imageCount; i++) {
     galleryGrid.innerHTML += `
@@ -305,26 +378,29 @@ const createImageCards = (selectedModel, imageCount, aspectRatio, promptText) =>
   generateImages(selectedModel, imageCount, aspectRatio, promptText);
 };
 
+// Event Handlers
 const handleFormSubmit = (e) => {
   e.preventDefault();
+  
+  if (!validateForm()) return;
+
   const selectedModel = modelSelect.value;
   const imageCount = parseInt(countSelect.value) || 1;
   const aspectRatio = ratioSelect.value || "1/1";
   const promptText = promptInput.value.trim();
-  if (!promptText) {
-    alert("Please enter a prompt");
-    return;
-  }
+
   createImageCards(selectedModel, imageCount, aspectRatio, promptText);
 };
 
-promptBtn.addEventListener("click", () => {
+const handlePromptButtonClick = () => {
   const prompt = examplePrompts[Math.floor(Math.random() * examplePrompts.length)];
   let i = 0;
+  
   promptInput.focus();
   promptInput.value = "";
   promptBtn.disabled = true;
   promptBtn.style.opacity = "0.5";
+  
   const typeInterval = setInterval(() => {
     if (i < prompt.length) {
       promptInput.value += prompt.charAt(i);
@@ -335,133 +411,92 @@ promptBtn.addEventListener("click", () => {
       promptBtn.style.opacity = "0.8";
     }
   }, 10);
-});
-
-themeToggle.addEventListener("click", toggleTheme);
-promptForm.addEventListener("submit", handleFormSubmit);
-
-const voiceBtn = document.getElementById("voice-btn");
-const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-recognition.lang = "en-US";
-recognition.interimResults = false;
-recognition.maxAlternatives = 1;
-
-voiceBtn.addEventListener("click", () => {
-  recognition.start();
-});
-
-recognition.onresult = (event) => {
-  const transcript = event.results[0][0].transcript;
-  console.log("Voice input:", transcript);
-  inputBox.value = transcript;
-
-  // Trigger image generation
-  generateBtn.click();
 };
 
-recognition.onerror = (event) => {
-  console.error("Speech recognition error:", event.error);
+// Voice Recognition Functions
+const setupVoiceRecognition = () => {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    console.warn('Speech recognition not supported');
+    return;
+  }
+
+  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  // Store original placeholder
+  let originalPlaceholder = promptInput.placeholder || "Enter your prompt...";
+
+  if (voiceBtn) {
+    voiceBtn.addEventListener("click", () => {
+      // Show listening in text input
+      promptInput.value = "";
+      promptInput.placeholder = "🎤 Listening...";
+      promptInput.style.fontStyle = "italic";
+      promptInput.style.color = "#2196F3";
+      recognition.start();
+    });
+  }
+
+  recognition.onstart = () => {
+    console.log("Voice recognition started");
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    console.log("Voice input:", transcript);
+    
+    // Restore normal input appearance and fill with transcript
+    promptInput.placeholder = originalPlaceholder;
+    promptInput.style.fontStyle = "normal";
+    promptInput.style.color = "";
+    promptInput.value = transcript;
+    
+    // Focus on the input field after voice input is complete
+    promptInput.focus();
+  };
+
+  recognition.onend = () => {
+    // Restore normal input appearance if recognition ended without result
+    promptInput.placeholder = originalPlaceholder;
+    promptInput.style.fontStyle = "normal";
+    promptInput.style.color = "";
+    console.log("Voice recognition ended");
+  };
+
+  recognition.onerror = (event) => {
+    // Restore normal input appearance on error
+    promptInput.placeholder = originalPlaceholder;
+    promptInput.style.fontStyle = "normal";
+    promptInput.style.color = "";
+    console.error("Speech recognition error:", event.error);
+    
+    // Show error message briefly in input
+    promptInput.placeholder = `❌ Voice error: ${event.error}`;
+    setTimeout(() => {
+      promptInput.placeholder = originalPlaceholder;
+    }, 3000);
+  };
 };
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("image-form");
-  const promptInput = document.getElementById("prompt-input");
-  const modelSelect = document.getElementById("model-select");
-  const countSelect = document.getElementById("count-select");
-  const ratioSelect = document.getElementById("ratio-select");
-  const gridSelect = document.getElementById("grid-size-select");
-  const galleryGrid = document.querySelector(".gallery-grid");
 
-  // Show error
-  const showError = (id, message) => {
-    const el = document.getElementById(id);
-    el.textContent = message;
-    el.style.display = "block";
-  };
+// Initialize Application
+const initializeApp = () => {
+  initializeTheme();
+  setupVoiceRecognition();
 
-  // Clear all errors
-  const clearErrors = () => {
-    document.querySelectorAll(".error-message").forEach(el => {
-      el.textContent = "";
-      el.style.display = "none";
-    });
-  };
-
-  // Clear specific error when user types/selects
-  const attachLiveValidation = (element, errorId) => {
-    element.addEventListener("input", () => {
-      const err = document.getElementById(errorId);
-      err.textContent = "";
-      err.style.display = "none";
-    });
-  };
-
+  // Attach live validation
   attachLiveValidation(promptInput, "error-prompt");
   attachLiveValidation(modelSelect, "error-model");
   attachLiveValidation(countSelect, "error-count");
   attachLiveValidation(ratioSelect, "error-ratio");
-  attachLiveValidation(gridSelect, "error-grid");
+  attachLiveValidation(gridSizeSelect, "error-grid");
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    clearErrors();
+  // Event listeners
+  if (themeToggle) themeToggle.addEventListener("click", toggleTheme);
+  if (promptForm) promptForm.addEventListener("submit", handleFormSubmit);
+  if (promptBtn) promptBtn.addEventListener("click", handlePromptButtonClick);
+};
 
-    let hasError = false;
-
-    if (!promptInput.value.trim()) {
-      showError("error-prompt", "Prompt is required.");
-      hasError = true;
-    }
-
-    if (!modelSelect.value) {
-      showError("error-model", "Select a model.");
-      hasError = true;
-    }
-
-    if (!countSelect.value) {
-      showError("error-count", "Select image count.");
-      hasError = true;
-    }
-
-    if (!ratioSelect.value) {
-      showError("error-ratio", "Select aspect ratio.");
-      hasError = true;
-    }
-
-    if (!gridSelect.value) {
-      showError("error-grid", "Select puzzle grid.");
-      hasError = true;
-    }
-
-    if (!hasError) {
-      createImageCards(
-        modelSelect.value,
-        parseInt(countSelect.value),
-        ratioSelect.value,
-        promptInput.value.trim()
-      );
-    }
-  });
-
-  // Actual createImageCards logic
-  const createImageCards = (selectedModel, imageCount, aspectRatio, promptText) => {
-    galleryGrid.innerHTML = "";
-    document.getElementById("puzzle-container").innerHTML = "";
-
-    for (let i = 0; i < imageCount; i++) {
-      galleryGrid.innerHTML += `
-        <div class="img-card loading" id="img-card-${i}" style="aspect-ratio: ${aspectRatio}">
-          <div class="status-container">
-            <div class="spinner"></div>
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            <p class="status-text">Generating...</p>
-          </div>
-        </div>`;
-    }
-
-    document.querySelectorAll(".img-card").forEach((card, i) => {
-      setTimeout(() => card.classList.add("animate-in"), 100 * i);
-    });
-
-    generateImages(selectedModel, imageCount, aspectRatio, promptText);
-  };
-});
+// Start the application when DOM is loaded
+document.addEventListener("DOMContentLoaded", initializeApp);
