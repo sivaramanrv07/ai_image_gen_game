@@ -120,6 +120,87 @@ const validateForm = () => {
   return !hasError;
 };
 
+// Show/Hide Images Feature
+const createImageToggleControl = () => {
+  // Remove existing control if it exists
+  const existingControl = document.getElementById("image-toggle-control");
+  if (existingControl) {
+    existingControl.remove();
+  }
+
+  const controlDiv = document.createElement("div");
+  controlDiv.id = "image-toggle-control";
+  controlDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    user-select: none;
+  `;
+  
+  controlDiv.innerHTML = `
+    <i class="fa-solid fa-eye"></i>
+    <span style="margin-left: 8px;">Hide Images</span>
+  `;
+  
+  let imagesVisible = true;
+  
+  controlDiv.addEventListener("click", () => {
+    imagesVisible = !imagesVisible;
+    const galleryGrid = document.querySelector(".gallery-grid");
+    
+    if (galleryGrid) {
+      galleryGrid.style.display = imagesVisible ? "grid" : "none";
+    }
+    
+    // Update button appearance
+    if (imagesVisible) {
+      controlDiv.style.background = "#4CAF50";
+      controlDiv.innerHTML = `
+        <i class="fa-solid fa-eye"></i>
+        <span style="margin-left: 8px;">Hide Images</span>
+      `;
+    } else {
+      controlDiv.style.background = "#FF5722";
+      controlDiv.innerHTML = `
+        <i class="fa-solid fa-eye-slash"></i>
+        <span style="margin-left: 8px;">Show Images</span>
+      `;
+    }
+  });
+  
+  controlDiv.addEventListener("mouseenter", () => {
+    controlDiv.style.transform = "scale(1.05)";
+  });
+  
+  controlDiv.addEventListener("mouseleave", () => {
+    controlDiv.style.transform = "scale(1)";
+  });
+  
+  document.body.appendChild(controlDiv);
+};
+
+const removeImageToggleControl = () => {
+  const controlDiv = document.getElementById("image-toggle-control");
+  if (controlDiv) {
+    controlDiv.style.transition = "all 0.5s ease";
+    controlDiv.style.opacity = "0";
+    controlDiv.style.transform = "scale(0.8)";
+    setTimeout(() => {
+      controlDiv.remove();
+    }, 500);
+  }
+};
+
 // Puzzle Functions
 const launchConfetti = () => {
   if (typeof confetti !== 'undefined') {
@@ -173,6 +254,9 @@ const checkPuzzleSolved = (container) => {
   if (isSolved) {
     showSuccessMessage("🎉 Puzzle Solved!");
     launchConfetti();
+
+    // Remove the image toggle control when puzzle is solved
+    removeImageToggleControl();
 
     // Animate completion
     container.querySelectorAll(".puzzle-piece").forEach(piece => {
@@ -359,6 +443,9 @@ const createImageCards = (selectedModel, imageCount, aspectRatio, promptText) =>
   galleryGrid.innerHTML = "";
   const puzzleContainer = document.getElementById("puzzle-container");
   if (puzzleContainer) puzzleContainer.innerHTML = "";
+
+  // Create the image toggle control when images are generated
+  createImageToggleControl();
 
   for (let i = 0; i < imageCount; i++) {
     galleryGrid.innerHTML += `

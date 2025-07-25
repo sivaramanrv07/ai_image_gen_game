@@ -52,11 +52,11 @@
           <div class="select-wrapper">
             <select class="custom-select" id="model-select">
               <option value="" selected disabled>Select Model</option>
-              <option value="black-forest-labs/FLUX.1-dev">FLUX.1-dev</option>
-              <option value="black-forest-labs/FLUX.1-schnell">FLUX.1-schnell</option>
-              <option value="stabilityai/stable-diffusion-xl-base-1.0">Stable Diffusion XL</option>
-              <option value="runwayml/stable-diffusion-v1-5">Stable Diffusion v1.5</option>
-              <option value="stabilityai/stable-diffusion-3-medium-diffusers">Stable Diffusion 3</option>
+              <option value="black-forest-labs/FLUX.1-dev">High Quality Image</option>
+              <option value="black-forest-labs/FLUX.1-schnell">Fast Generation Image</option>
+              <option value="stabilityai/stable-diffusion-xl-base-1.0">Detailed Artwork Image</option>
+              <option value="runwayml/stable-diffusion-v1-5">Standard Image</option>
+              <option value="stabilityai/stable-diffusion-3-medium-diffusers">Advanced Image</option>
             </select>
             <div class="error-message" id="error-model"></div>
           </div>
@@ -82,14 +82,20 @@
             <div class="error-message" id="error-ratio"></div>
           </div>
 
-          <div class="select-wrapper">
-            <select class="custom-select" id="grid-size-select">
-              <option value="" selected disabled>Puzzle Grid</option>
-              <option value="2">2 x 2</option>
-              <option value="3">3 x 3</option>
-            </select>
-            <div class="error-message" id="error-grid"></div>
-          </div>
+         <div class="select-wrapper">
+  <select class="custom-select" id="grid-size-select">
+    <option value="" selected disabled>Puzzle Grid</option>
+    <option value="2">2 x 2</option>
+    <option value="3">3 x 3</option>
+    <option value="4">4 x 4</option>
+    <option value="5">5 x 5</option>
+    <option value="6">6 x 6</option>
+    <option value="7">7 x 7</option>
+    <option value="8">8 x 8</option>
+  </select>
+  <div class="error-message" id="error-grid"></div>
+</div>
+
 
           <button type="submit" class="generate-btn">
             <i class="fa-solid fa-wand-sparkles"></i>
