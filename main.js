@@ -270,6 +270,11 @@ const checkPuzzleSolved = (container) => {
       container.style.opacity = "0";
       setTimeout(() => {
         container.remove();
+
+         const galleryGrid = document.querySelector(".gallery-grid");
+        if (galleryGrid) {
+          galleryGrid.style.display = "grid"; // or "flex" if you used flexbox
+        }
         // Auto refresh page after 1 minute (60 seconds)
         setTimeout(() => {
           window.location.reload();
@@ -437,6 +442,7 @@ const generateImages = async (selectedModel, imageCount, aspectRatio, promptText
 
   await Promise.allSettled(imagePromises);
   generateBtn.removeAttribute("disabled");
+  createImageToggleControl();
 };
 
 const createImageCards = (selectedModel, imageCount, aspectRatio, promptText) => {
@@ -445,7 +451,6 @@ const createImageCards = (selectedModel, imageCount, aspectRatio, promptText) =>
   if (puzzleContainer) puzzleContainer.innerHTML = "";
 
   // Create the image toggle control when images are generated
-  createImageToggleControl();
 
   for (let i = 0; i < imageCount; i++) {
     galleryGrid.innerHTML += `
@@ -463,6 +468,7 @@ const createImageCards = (selectedModel, imageCount, aspectRatio, promptText) =>
   });
 
   generateImages(selectedModel, imageCount, aspectRatio, promptText);
+  
 };
 
 // Event Handlers
