@@ -15,6 +15,9 @@ const voiceBtn = document.getElementById("voice-btn");
 const API_KEY = "vk-mFOBg3cgo90fNuXdnXZB19nwOk5nDSDjCyUau2IRe4IOiQ";
 const API_URL = "https://api.vyro.ai/v2/image/generations";
 
+// Track active puzzles
+let activePuzzles = 0;
+
 const examplePrompts = [
   "Show a superhero in a wheelchair flying through a futuristic city.",
   "Create an image of a blind musician performing in a glowing concert hall with sound waves around them.",
@@ -120,7 +123,7 @@ const validateForm = () => {
   return !hasError;
 };
 
-// Show/Hide Images Feature
+// Show/Hide Images Feature - Updated
 const createImageToggleControl = () => {
   // Remove existing control if it exists
   const existingControl = document.getElementById("image-toggle-control");
@@ -131,62 +134,80 @@ const createImageToggleControl = () => {
   const controlDiv = document.createElement("div");
   controlDiv.id = "image-toggle-control";
   controlDiv.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
-    background: #4CAF50;
-    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 15px auto;
     padding: 10px 20px;
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
     border-radius: 25px;
-    border: none;
-    cursor: pointer;
     font-weight: bold;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
     transition: all 0.3s ease;
+    font-size: 14px;
     user-select: none;
   `;
-  
+
   controlDiv.innerHTML = `
-    <i class="fa-solid fa-eye"></i>
-    <span style="margin-left: 8px;">Hide Images</span>
+    <i class="fa-solid fa-eye" style="font-size: 16px;"></i>
+    <span>Hide Images</span>
   `;
-  
+
   let imagesVisible = true;
-  
+
   controlDiv.addEventListener("click", () => {
     imagesVisible = !imagesVisible;
     const galleryGrid = document.querySelector(".gallery-grid");
-    
+
     if (galleryGrid) {
+      galleryGrid.style.transition = "opacity 0.3s ease";
       galleryGrid.style.display = imagesVisible ? "grid" : "none";
     }
+
+    // Update text, icon, and styling
+    controlDiv.style.background = imagesVisible 
+      ? "linear-gradient(135deg, #4CAF50, #45a049)" 
+      : "linear-gradient(135deg, #FF5722, #e64a19)";
+    controlDiv.style.boxShadow = imagesVisible 
+      ? "0 4px 15px rgba(76, 175, 80, 0.3)" 
+      : "0 4px 15px rgba(255, 87, 34, 0.3)";
     
-    // Update button appearance
-    if (imagesVisible) {
-      controlDiv.style.background = "#4CAF50";
-      controlDiv.innerHTML = `
-        <i class="fa-solid fa-eye"></i>
-        <span style="margin-left: 8px;">Hide Images</span>
-      `;
-    } else {
-      controlDiv.style.background = "#FF5722";
-      controlDiv.innerHTML = `
-        <i class="fa-solid fa-eye-slash"></i>
-        <span style="margin-left: 8px;">Show Images</span>
-      `;
-    }
+    controlDiv.innerHTML = imagesVisible
+      ? `<i class="fa-solid fa-eye" style="font-size: 16px;"></i><span>Hide Images</span>`
+      : `<i class="fa-solid fa-eye-slash" style="font-size: 16px;"></i><span>Show Images</span>`;
   });
-  
+
+  // Enhanced hover effects
   controlDiv.addEventListener("mouseenter", () => {
-    controlDiv.style.transform = "scale(1.05)";
+    controlDiv.style.transform = "scale(1.05) translateY(-2px)";
+    controlDiv.style.boxShadow = imagesVisible 
+      ? "0 6px 20px rgba(76, 175, 80, 0.4)" 
+      : "0 6px 20px rgba(255, 87, 34, 0.4)";
   });
-  
+
   controlDiv.addEventListener("mouseleave", () => {
-    controlDiv.style.transform = "scale(1)";
+    controlDiv.style.transform = "scale(1) translateY(0)";
+    controlDiv.style.boxShadow = imagesVisible 
+      ? "0 4px 15px rgba(76, 175, 80, 0.3)" 
+      : "0 4px 15px rgba(255, 87, 34, 0.3)";
   });
-  
-  document.body.appendChild(controlDiv);
+
+  // Insert it just before the galleryGrid with smooth animation
+  const galleryGrid = document.querySelector(".gallery-grid");
+  if (galleryGrid && galleryGrid.parentNode) {
+    galleryGrid.parentNode.insertBefore(controlDiv, galleryGrid);
+    
+    // Animate in
+    controlDiv.style.opacity = "0";
+    controlDiv.style.transform = "scale(0.8) translateY(10px)";
+    
+    requestAnimationFrame(() => {
+      controlDiv.style.opacity = "1";
+      controlDiv.style.transform = "scale(1) translateY(0)";
+    });
+  }
 };
 
 const removeImageToggleControl = () => {
@@ -194,7 +215,7 @@ const removeImageToggleControl = () => {
   if (controlDiv) {
     controlDiv.style.transition = "all 0.5s ease";
     controlDiv.style.opacity = "0";
-    controlDiv.style.transform = "scale(0.8)";
+    controlDiv.style.transform = "scale(0.8) translateY(-10px)";
     setTimeout(() => {
       controlDiv.remove();
     }, 500);
@@ -224,13 +245,13 @@ const showSuccessMessage = (message) => {
       top: "20px",
       left: "50%",
       transform: "translateX(-50%)",
-      padding: "12px 24px",
+      padding: "15px 30px",
       backgroundColor: "#4caf50",
       color: "#fff",
-      borderRadius: "10px",
+      borderRadius: "15px",
       fontWeight: "bold",
       zIndex: "9999",
-      boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
+      boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
       fontSize: "18px",
       animation: "popIn 0.5s ease-out"
     });
@@ -242,6 +263,7 @@ const showSuccessMessage = (message) => {
   msgBox.style.display = "block";
 
   setTimeout(() => {
+    msgBox.style.transition = "opacity 0.6s ease";
     msgBox.style.opacity = "0";
     setTimeout(() => msgBox.style.display = "none", 600);
   }, 3000);
@@ -255,33 +277,58 @@ const checkPuzzleSolved = (container) => {
     showSuccessMessage("🎉 Puzzle Solved!");
     launchConfetti();
 
-    // Remove the image toggle control when puzzle is solved
-    removeImageToggleControl();
+    // Decrease active puzzle count
+    activePuzzles--;
+
+    // Remove the image toggle control only when ALL puzzles are solved
+    if (activePuzzles <= 0) {
+      removeImageToggleControl();
+      
+      // Show images again when all puzzles are solved
+      const galleryGrid = document.querySelector(".gallery-grid");
+      if (galleryGrid) {
+        galleryGrid.style.display = "grid";
+      }
+    }
 
     // Animate completion
-    container.querySelectorAll(".puzzle-piece").forEach(piece => {
-      piece.style.transition = "transform 0.6s ease, opacity 0.6s ease";
-      piece.style.transform = "scale(1.1) rotate(5deg)";
+    container.querySelectorAll(".puzzle-piece").forEach((piece, index) => {
+      setTimeout(() => {
+        piece.style.transition = "transform 0.6s ease, opacity 0.6s ease";
+        piece.style.transform = "scale(1.1) rotate(5deg)";
+      }, index * 100);
     });
 
     setTimeout(() => {
       container.style.transition = "transform 1s ease, opacity 1s ease";
       container.style.transform = "scale(0.9)";
       container.style.opacity = "0";
+      
       setTimeout(() => {
         container.remove();
 
-         const galleryGrid = document.querySelector(".gallery-grid");
-        if (galleryGrid) {
-          galleryGrid.style.display = "grid"; // or "flex" if you used flexbox
+        // Auto refresh page after 1 minute only if all puzzles are solved
+        if (activePuzzles <= 0) {
+          setTimeout(() => {
+            window.location.reload();
+          }, 60000); // 60,000 milliseconds = 1 minute
         }
-        // Auto refresh page after 1 minute (60 seconds)
-        setTimeout(() => {
-          window.location.reload();
-        }, 60000); // 60,000 milliseconds = 1 minute
       }, 1000);
     }, 3000);
   }
+};
+
+const checkTileCorrectness = (container) => {
+  Array.from(container.children).forEach((piece, index) => {
+    const correctIndex = parseInt(piece.dataset.correctIndex);
+    if (index === correctIndex) {
+      piece.style.border = "3px solid #4CAF50"; // Green for correct
+      piece.style.boxShadow = "0 0 10px rgba(76, 175, 80, 0.5)";
+    } else {
+      piece.style.border = "3px solid #F44336"; // Red for incorrect
+      piece.style.boxShadow = "0 0 10px rgba(244, 67, 54, 0.5)";
+    }
+  });
 };
 
 const addSwapListeners = (container, rows, cols) => {
@@ -291,16 +338,31 @@ const addSwapListeners = (container, rows, cols) => {
     piece.addEventListener("dragstart", () => {
       dragged = piece;
       piece.style.opacity = "0.5";
+      piece.style.transform = "scale(0.95)";
     });
 
     piece.addEventListener("dragend", () => {
       dragged = null;
       piece.style.opacity = "1";
+      piece.style.transform = "scale(1)";
     });
 
     piece.addEventListener("dragover", (e) => e.preventDefault());
 
+    piece.addEventListener("dragenter", (e) => {
+      e.preventDefault();
+      if (dragged && dragged !== piece) {
+        piece.style.transform = "scale(1.05)";
+      }
+    });
+
+    piece.addEventListener("dragleave", () => {
+      piece.style.transform = "scale(1)";
+    });
+
     piece.addEventListener("drop", () => {
+      piece.style.transform = "scale(1)";
+      
       if (dragged && dragged !== piece) {
         const draggedClone = dragged.cloneNode(true);
         const targetClone = piece.cloneNode(true);
@@ -308,8 +370,9 @@ const addSwapListeners = (container, rows, cols) => {
         container.replaceChild(targetClone, dragged);
         container.replaceChild(draggedClone, piece);
 
-        addSwapListeners(container, rows, cols);
-        checkPuzzleSolved(container);
+        addSwapListeners(container, rows, cols);   // Reattach listeners
+        checkTileCorrectness(container);           // Show feedback
+        checkPuzzleSolved(container);              // Check if complete
       }
     });
   });
@@ -318,26 +381,29 @@ const addSwapListeners = (container, rows, cols) => {
 const createPuzzle = (container, imageUrl, rows = 3, cols = 3) => {
   container.innerHTML = "";
   container.classList.add("puzzle-container");
-  
+
   Object.assign(container.style, {
     position: "relative",
     display: "grid",
     gridTemplateRows: `repeat(${rows}, 1fr)`,
     gridTemplateColumns: `repeat(${cols}, 1fr)`,
-    gap: "2px",
+    gap: "3px",
     aspectRatio: "1/1",
-    overflow: "hidden"
+    overflow: "hidden",
+    borderRadius: "10px",
+    boxShadow: "0 8px 25px rgba(0,0,0,0.2)",
+    border: "2px solid #ddd"
   });
 
   const pieces = [];
   const img = new Image();
-  
+
   img.onload = () => {
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const piece = document.createElement("div");
         piece.classList.add("puzzle-piece");
-        
+
         Object.assign(piece.style, {
           backgroundImage: `url(${imageUrl})`,
           backgroundSize: `${cols * 100}% ${rows * 100}%`,
@@ -345,25 +411,40 @@ const createPuzzle = (container, imageUrl, rows = 3, cols = 3) => {
           width: "100%",
           height: "100%",
           cursor: "grab",
-          border: "1px solid #ccc"
+          border: "2px solid #ccc",
+          borderRadius: "5px",
+          transition: "all 0.3s ease"
         });
-        
+
+        piece.addEventListener("mouseenter", () => {
+          piece.style.cursor = "grab";
+          piece.style.filter = "brightness(1.1)";
+        });
+
+        piece.addEventListener("mouseleave", () => {
+          piece.style.filter = "brightness(1)";
+        });
+
         piece.dataset.correctIndex = r * cols + c;
         piece.draggable = true;
         pieces.push(piece);
       }
     }
 
-    // Shuffle and add pieces
     const shuffled = [...pieces].sort(() => Math.random() - 0.5);
     shuffled.forEach(piece => container.appendChild(piece));
+
     addSwapListeners(container, rows, cols);
+    checkTileCorrectness(container); // initial correctness feedback
+    
+    // Increment active puzzle count
+    activePuzzles++;
   };
-  
+
   img.src = imageUrl;
 };
 
-// Image Generation Functions
+// Image Generation Functions - Updated
 const updateImageCard = (index, imageUrl) => {
   const imgCard = document.getElementById(`img-card-${index}`);
   if (!imgCard) return;
@@ -385,10 +466,20 @@ const updateImageCard = (index, imageUrl) => {
     Object.assign(puzzleBox.style, {
       width: "300px",
       aspectRatio: "1 / 1",
-      margin: "10px"
+      margin: "15px auto",
+      opacity: "0",
+      transform: "scale(0.8)"
     });
     
     puzzleContainer.appendChild(puzzleBox);
+    
+    // Animate puzzle container in
+    requestAnimationFrame(() => {
+      puzzleBox.style.transition = "all 0.5s ease";
+      puzzleBox.style.opacity = "1";
+      puzzleBox.style.transform = "scale(1)";
+    });
+    
     const gridSize = parseInt(gridSizeSelect.value) || 3;
     createPuzzle(puzzleBox, imageUrl, gridSize, gridSize);
   }
@@ -397,6 +488,7 @@ const updateImageCard = (index, imageUrl) => {
 const generateImages = async (selectedModel, imageCount, aspectRatio, promptText) => {
   const { width, height } = getImageDimensions(aspectRatio);
   generateBtn.setAttribute("disabled", "true");
+  generateBtn.textContent = "Generating...";
 
   const imagePromises = Array.from({ length: imageCount }, async (_, i) => {
     try {
@@ -442,15 +534,22 @@ const generateImages = async (selectedModel, imageCount, aspectRatio, promptText
 
   await Promise.allSettled(imagePromises);
   generateBtn.removeAttribute("disabled");
+  generateBtn.textContent = "Generate Images";
+  
+  // Show toggle control after images are generated
   createImageToggleControl();
 };
 
 const createImageCards = (selectedModel, imageCount, aspectRatio, promptText) => {
+  // Reset active puzzles counter
+  activePuzzles = 0;
+  
   galleryGrid.innerHTML = "";
   const puzzleContainer = document.getElementById("puzzle-container");
   if (puzzleContainer) puzzleContainer.innerHTML = "";
 
-  // Create the image toggle control when images are generated
+  // Remove existing toggle control
+  removeImageToggleControl();
 
   for (let i = 0; i < imageCount; i++) {
     galleryGrid.innerHTML += `
@@ -468,7 +567,6 @@ const createImageCards = (selectedModel, imageCount, aspectRatio, promptText) =>
   });
 
   generateImages(selectedModel, imageCount, aspectRatio, promptText);
-  
 };
 
 // Event Handlers
